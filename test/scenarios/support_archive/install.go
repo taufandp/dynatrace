@@ -53,7 +53,7 @@ func supportArchiveExecution(t *testing.T) features.Feature {
 		CloudNative(&dynatracev1beta1.CloudNativeFullStackSpec{})
 	testDynakube := dynakubeBuilder.Build()
 
-	// Register sample namespace creat and delete
+	// Register sample namespace create and delete
 	builder.Assess("create sample injected namespace", namespace.Create(namespace.NewBuilder(testAppNameInjected).Build()))
 	builder.Assess("create sample not injected namespace", namespace.Create(namespace.NewBuilder(testAppNameNotInjected).Build()))
 	builder.Teardown(namespace.Delete(testAppNameInjected))
@@ -120,6 +120,7 @@ func collectRequiredFiles(t *testing.T, ctx context.Context, resources *resource
 	namespace := testDynakube.Namespace
 	requiredFiles := make([]string, 0)
 	requiredFiles = append(requiredFiles, support_archive.OperatorVersionFileName)
+	requiredFiles = append(requiredFiles, support_archive.TroublshootOutputFileName)
 	requiredFiles = append(requiredFiles, getRequiredPodFiles(t, ctx, resources, namespace)...)
 	requiredFiles = append(requiredFiles, getRequiredReplicaSetFiles(t, ctx, resources, namespace)...)
 	requiredFiles = append(requiredFiles, getRequiredServiceFiles(t, ctx, resources, namespace)...)
