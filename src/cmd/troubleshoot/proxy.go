@@ -14,7 +14,6 @@ func checkProxySettings(troubleshootCtx *troubleshootContext) error {
 }
 
 func checkProxySettingsWithLog(troubleshootCtx *troubleshootContext, log logr.Logger) error {
-
 	var proxyURL string
 	logNewCheckf(log, "Analyzing proxy settings ...")
 

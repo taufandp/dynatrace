@@ -110,32 +110,6 @@ func (builder CommandBuilder) buildRun() func(*cobra.Command, []string) error {
 		log := NewTroubleshootLoggerToWriter(os.Stdout)
 
 		RunTroubleshootCmd(context.Background(), log, apiReader, namespaceFlagValue, *kubeConfig)
-
-		troubleshootCtx := troubleshootContext{
-			context:       context.Background(),
-			apiReader:     apiReader,
-			httpClient:    &http.Client{},
-			namespaceName: namespaceFlagValue,
-			kubeConfig:    *kubeConfig,
-			baseLog:       log,
-		}
-
-		results := NewChecksResults()
-		err = runChecks(log, results, &troubleshootCtx, getPrerequisiteChecks()) // ignore error to avoid polluting pretty logs
-		//resetLogger() == newTroubleshootLogger("")
-
-		if err != nil {
-			logErrorf(log, "prerequisite checks failed, aborting")
-			return nil //nolint:nilerr
-		}
-
-		dynakubes, err := getDynakubes(log, troubleshootCtx, dynakubeFlagValue)
-		if err != nil {
-			return nil //nolint:nilerr
-		}
-
-		runChecksForAllDynakubes(log, results, getDynakubeSpecificChecks(results), dynakubes, apiReader)
-
 		return nil
 	}
 }
@@ -150,7 +124,6 @@ func RunTroubleshootCmd(ctx context.Context, log logr.Logger, apiReader client.R
 		baseLog:       log,
 	}
 
-	//TODO: maybe check output (aka. logs) and results should be combined, also the logs are a kind of result in the context of troubleshooting
 	results := NewChecksResults()
 	err := runChecks(log, results, &troubleshootCtx, getPrerequisiteChecks()) // ignore error to avoid polluting pretty logs
 
@@ -182,7 +155,7 @@ func runChecksForAllDynakubes(log logr.Logger, results ChecksResults, checks []*
 		}
 
 		_ = runChecks(log, results, &troubleshootCtx, checks) // ignore error to avoid polluting pretty logs, errors are logged inside runChecks
-		//resetLogger()
+
 		if !results.hasErrors() {
 			logOkf(log, "'%s' - all checks passed", dynakube.Name)
 		}

@@ -55,7 +55,6 @@ func checkDynakube(results ChecksResults, troubleshootCtx *troubleshootContext) 
 }
 
 func getSelectedDynakube(troubleshootCtx *troubleshootContext) (v1beta1.DynaKube, error) {
-
 	query := kubeobjects.NewDynakubeQuery(troubleshootCtx.apiReader, troubleshootCtx.namespaceName).WithContext(troubleshootCtx.context)
 	dynaKube, err := query.Get(types.NamespacedName{Namespace: troubleshootCtx.namespaceName, Name: troubleshootCtx.dynakube.Name})
 
