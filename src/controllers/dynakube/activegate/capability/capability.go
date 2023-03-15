@@ -178,12 +178,12 @@ func syntheticBase() *capabilityBase {
 	return &c
 }
 
-func GenerateActiveGateCapabilities(dynaKube *dynatracev1beta1.DynaKube) []Capability {
+func GenerateActiveGateCapabilities(dynakube *dynatracev1beta1.DynaKube) []Capability {
 	return []Capability{
-		NewKubeMonCapability(dynaKube),
-		NewRoutingCapability(dynaKube),
-		NewMultiCapability(dynaKube),
-		NewSyntheticCapability(dynaKube),
+		NewKubeMonCapability(dynakube),
+		NewRoutingCapability(dynakube),
+		NewMultiCapability(dynakube),
+		NewSyntheticCapability(dynakube),
 	}
 }
 

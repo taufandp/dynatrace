@@ -316,21 +316,21 @@ func (dk *DynaKube) FeatureMaxFailedCsiMountAttempts() int {
 	return maxCsiMountAttempts
 }
 
-func (dynaKube *DynaKube) FeatureSyntheticLocationEntityId() string {
-	return dynaKube.getFeatureFlagRaw(AnnotationFeatureSyntheticLocationEntityId)
+func (dk *DynaKube) FeatureSyntheticLocationEntityId() string {
+	return dk.getFeatureFlagRaw(AnnotationFeatureSyntheticLocationEntityId)
 }
 
-func (dynaKube *DynaKube) FeatureSyntheticNodeType() string {
-	node := dynaKube.getFeatureFlagRaw(AnnotationFeatureSyntheticNodeType)
+func (dk *DynaKube) FeatureSyntheticNodeType() string {
+	node := dk.getFeatureFlagRaw(AnnotationFeatureSyntheticNodeType)
 	if node == "" {
 		node = SyntheticNodeS
 	}
 	return node
 }
 
-func (dynaKube *DynaKube) FeatureSyntheticReplicas() int32 {
+func (dk *DynaKube) FeatureSyntheticReplicas() int32 {
 	replicas := DefaultSyntheticReplicas
-	value := dynaKube.getFeatureFlagRaw(AnnotationFeatureSyntheticReplicas)
+	value := dk.getFeatureFlagRaw(AnnotationFeatureSyntheticReplicas)
 	if value != "" {
 		parsed, err := strconv.Atoi(value)
 		if err == nil {

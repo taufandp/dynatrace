@@ -140,8 +140,8 @@ func (dk *DynaKube) IsMetricsIngestActiveGateEnabled() bool {
 	return dk.IsActiveGateMode(MetricsIngestCapability.DisplayName)
 }
 
-func (dynaKube *DynaKube) IsSyntheticMonitoringEnabled() bool {
-	return dynaKube.FeatureSyntheticLocationEntityId() != ""
+func (dk *DynaKube) IsSyntheticMonitoringEnabled() bool {
+	return dk.FeatureSyntheticLocationEntityId() != ""
 }
 
 func (dk *DynaKube) NeedsActiveGateServicePorts() bool {
@@ -241,13 +241,13 @@ func (dk *DynaKube) CustomActiveGateImage() string {
 }
 
 // returns the synthetic image supplied by the given DynaKube.
-func (dynaKube *DynaKube) SyntheticImage() string {
-	image := dynaKube.FeatureCustomSyntheticImage()
+func (dk *DynaKube) SyntheticImage() string {
+	image := dk.FeatureCustomSyntheticImage()
 	if image != "" {
 		return image
 	}
 
-	apiUrlHost := dynaKube.ApiUrlHost()
+	apiUrlHost := dk.ApiUrlHost()
 
 	if apiUrlHost == "" {
 		return ""
