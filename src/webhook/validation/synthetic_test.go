@@ -9,28 +9,38 @@ import (
 )
 
 func TestSyntheticInvalidSettings(t *testing.T) {
-	capability := []dynatracev1beta1.CapabilityDisplayName{
-		dynatracev1beta1.SyntheticCapability.DisplayName,
+	const (
+		invalidType     = "XL"
+		invalidReplicas = "?"
+	)
+	dynaKube := dynatracev1beta1.DynaKube{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testName,
+			Namespace: testNamespace,
+			Annotations: map[string]string{
+				dynatracev1beta1.AnnotationFeatureSyntheticLocationEntityId: "unknown",
+				dynatracev1beta1.AnnotationFeatureSyntheticNodeType:         invalidType,
+				dynatracev1beta1.AnnotationFeatureSyntheticReplicas:         invalidReplicas,
+			},
+		},
+		Spec: dynatracev1beta1.DynaKubeSpec{
+			APIURL: testApiUrl,
+		},
 	}
-	invalidType := "XL"
 
-	t.Run("synthetic-node-type", func(t *testing.T) {
-		assertDeniedResponse(t,
+	toAssertInvalidNodeType := func(t *testing.T) {
+		assertDeniedResponse(
+			t,
 			[]string{fmt.Sprintf(errorInvalidSyntheticNodeType, invalidType)},
-			&dynatracev1beta1.DynaKube{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      testName,
-					Namespace: testNamespace,
-					Annotations: map[string]string{
-						dynatracev1beta1.AnnotationFeatureSyntheticNodeType: invalidType,
-					},
-				},
-				Spec: dynatracev1beta1.DynaKubeSpec{
-					APIURL: testApiUrl,
-					ActiveGate: dynatracev1beta1.ActiveGateSpec{
-						Capabilities: capability,
-					},
-				},
-			})
-	})
+			&dynaKube)
+	}
+	t.Run("node-type", toAssertInvalidNodeType)
+
+	delete(
+		dynaKube.ObjectMeta.Annotations,
+		dynatracev1beta1.AnnotationFeatureSyntheticNodeType)
+	toAssertDefaultReplicas := func(t *testing.T) {
+		assertAllowedResponseWithWarnings(t, 2, &dynaKube)
+	}
+	t.Run("valid-replicas", toAssertDefaultReplicas)
 }

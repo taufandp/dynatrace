@@ -60,8 +60,10 @@ func (dk *DynaKube) ApiUrlHost() string {
 }
 
 // NeedsActiveGate returns true when a feature requires ActiveGate instances.
-func (dk *DynaKube) NeedsActiveGate() bool {
-	return dk.DeprecatedActiveGateMode() || dk.ActiveGateMode()
+func (dynaKube *DynaKube) NeedsActiveGate() bool {
+	return dynaKube.DeprecatedActiveGateMode() ||
+		dynaKube.ActiveGateMode() ||
+		dynaKube.IsSyntheticMonitoringEnabled()
 }
 
 // ApplicationMonitoringMode returns true when application only section is used.
@@ -138,6 +140,10 @@ func (dk *DynaKube) IsMetricsIngestActiveGateEnabled() bool {
 	return dk.IsActiveGateMode(MetricsIngestCapability.DisplayName)
 }
 
+func (dynaKube *DynaKube) IsSyntheticMonitoringEnabled() bool {
+	return dynaKube.FeatureSyntheticLocationEntityId() != ""
+}
+
 func (dk *DynaKube) NeedsActiveGateServicePorts() bool {
 	return dk.IsRoutingActiveGateEnabled() ||
 		dk.IsApiActiveGateEnabled() ||
@@ -146,10 +152,6 @@ func (dk *DynaKube) NeedsActiveGateServicePorts() bool {
 
 func (dk *DynaKube) NeedsActiveGateService() bool {
 	return dk.NeedsActiveGateServicePorts()
-}
-
-func (dk *DynaKube) IsSyntheticActiveGateEnabled() bool {
-	return dk.IsActiveGateMode(SyntheticCapability.DisplayName)
 }
 
 func (dk *DynaKube) HasActiveGateCaCert() bool {
@@ -239,12 +241,13 @@ func (dk *DynaKube) CustomActiveGateImage() string {
 }
 
 // returns the synthetic image supplied by the given DynaKube.
-func (dk *DynaKube) SyntheticImage() string {
-	if dk.FeatureCustomSyntheticImage() != "" {
-		return dk.FeatureCustomSyntheticImage()
+func (dynaKube *DynaKube) SyntheticImage() string {
+	image := dynaKube.FeatureCustomSyntheticImage()
+	if image != "" {
+		return image
 	}
 
-	apiUrlHost := dk.ApiUrlHost()
+	apiUrlHost := dynaKube.ApiUrlHost()
 
 	if apiUrlHost == "" {
 		return ""

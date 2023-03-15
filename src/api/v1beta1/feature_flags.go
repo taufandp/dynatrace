@@ -47,7 +47,6 @@ const (
 	AnnotationFeatureAutomaticK8sApiMonitoringClusterName = AnnotationFeaturePrefix + "automatic-kubernetes-api-monitoring-cluster-name"
 	AnnotationFeatureActiveGateIgnoreProxy                = AnnotationFeaturePrefix + "activegate-ignore-proxy"
 
-	// synthetic
 	AnnotationFeatureCustomSyntheticImage = AnnotationFeaturePrefix + "custom-synthetic-image"
 
 	// dtClient
@@ -89,12 +88,19 @@ const (
 	// CSI
 	AnnotationFeatureMaxFailedCsiMountAttempts = AnnotationFeaturePrefix + "max-csi-mount-attempts"
 
-	falsePhrase = "false"
-	truePhrase  = "true"
+	// synthetic location
+	AnnotationFeatureSyntheticLocationEntityId = AnnotationFeaturePrefix + "synthetic-location-entity-id"
 
 	// synthetic node type
 	AnnotationFeatureSyntheticNodeType = AnnotationFeaturePrefix + "synthetic-node-type"
 
+	// replicas for the synthetic monitoring
+	AnnotationFeatureSyntheticReplicas = AnnotationFeaturePrefix + "synthetic-replicas"
+
+	falsePhrase = "false"
+	truePhrase  = "true"
+
+	// synthetic node types
 	SyntheticNodeXs = "XS"
 	SyntheticNodeS  = "S"
 	SyntheticNodeM  = "M"
@@ -106,6 +112,8 @@ const (
 
 var (
 	log = logger.Factory.GetLogger("dynakube-api")
+
+	DefaultSyntheticReplicas = int32(1)
 )
 
 func (dk *DynaKube) getDisableFlagWithDeprecatedAnnotation(annotation string, deprecatedAnnotation string) bool {
@@ -308,10 +316,27 @@ func (dk *DynaKube) FeatureMaxFailedCsiMountAttempts() int {
 	return maxCsiMountAttempts
 }
 
-func (dk *DynaKube) FeatureSyntheticNodeType() string {
-	node, ok := dk.Annotations[AnnotationFeatureSyntheticNodeType]
-	if !ok {
-		return SyntheticNodeS
+func (dynaKube *DynaKube) FeatureSyntheticLocationEntityId() string {
+	return dynaKube.getFeatureFlagRaw(AnnotationFeatureSyntheticLocationEntityId)
+}
+
+func (dynaKube *DynaKube) FeatureSyntheticNodeType() string {
+	node := dynaKube.getFeatureFlagRaw(AnnotationFeatureSyntheticNodeType)
+	if node == "" {
+		node = SyntheticNodeS
 	}
 	return node
+}
+
+func (dynaKube *DynaKube) FeatureSyntheticReplicas() int32 {
+	replicas := DefaultSyntheticReplicas
+	value := dynaKube.getFeatureFlagRaw(AnnotationFeatureSyntheticReplicas)
+	if value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err == nil {
+			replicas = int32(parsed)
+		}
+	}
+
+	return replicas
 }
