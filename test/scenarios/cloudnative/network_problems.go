@@ -41,6 +41,9 @@ func NetworkProblems(t *testing.T) features.Feature {
 		WithDefaultObjectMeta().
 		ApiUrl(secretConfig.ApiUrl).
 		CloudNative(defaultCloudNativeSpec()).
+		WithAnnotations(map[string]string{
+			"feature.dynatrace.com/max-csi-mount-attempts": "2",
+		}).
 		Build()
 
 	namespaceBuilder := namespace.NewBuilder("network-problem-sample")

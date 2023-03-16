@@ -25,7 +25,7 @@ test/e2e/cloudnative/istio: manifests/crd/helm
 
 ## Runs CloudNative proxy e2e test only
 test/e2e/cloudnative/proxy: manifests/crd/helm
-	go test -v -tags "$(shell ./hack/build/create_go_build_tags.sh true)" -count=1 ./test/scenarios/cloudnative/proxy
+	go test -v -tags "$(shell ./hack/build/create_go_build_tags.sh true)" -timeout 20m -count=1 ./test/scenarios/cloudnative/proxy
 
 ## Runs CloudNative network problem e2e test only
 test/e2e/cloudnative/network: manifests/crd/helm
