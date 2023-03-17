@@ -1,7 +1,6 @@
 package image
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 
@@ -12,9 +11,6 @@ import (
 	"github.com/Dynatrace/dynatrace-operator/src/installer/symlink"
 	"github.com/Dynatrace/dynatrace-operator/src/installer/zip"
 	"github.com/Dynatrace/dynatrace-operator/src/processmoduleconfig"
-	"github.com/containers/image/v5/docker"
-	"github.com/containers/image/v5/types"
-	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
@@ -24,7 +20,7 @@ type Properties struct {
 	DockerConfig dockerconfig.DockerConfig
 	PathResolver metadata.PathResolver
 	Metadata     metadata.Access
-	imageDigest  string
+	ImageDigest  string
 }
 
 func NewImageInstaller(fs afero.Fs, props *Properties) *Installer {
@@ -39,10 +35,6 @@ type Installer struct {
 	fs        afero.Fs
 	extractor zip.Extractor
 	props     *Properties
-}
-
-func (installer Installer) ImageDigest() string {
-	return installer.props.imageDigest
 }
 
 func (installer *Installer) InstallAgent(targetDir string) (bool, error) {
@@ -60,7 +52,7 @@ func (installer *Installer) InstallAgent(targetDir string) (bool, error) {
 		return false, errors.WithStack(err)
 	}
 
-	sharedDir := installer.props.PathResolver.AgentSharedBinaryDirForImage(installer.ImageDigest())
+	sharedDir := installer.props.PathResolver.AgentSharedBinaryDirForImage(installer.props.ImageDigest)
 	if err := symlink.CreateSymlinkForCurrentVersionIfNotExists(installer.fs, sharedDir); err != nil {
 		_ = installer.fs.RemoveAll(targetDir)
 		_ = installer.fs.RemoveAll(sharedDir)
@@ -71,7 +63,7 @@ func (installer *Installer) InstallAgent(targetDir string) (bool, error) {
 }
 
 func (installer Installer) UpdateProcessModuleConfig(targetDir string, processModuleConfig *dtypes.ProcessModuleConfig) error {
-	sourceDir := installer.props.PathResolver.AgentSharedBinaryDirForImage(installer.ImageDigest())
+	sourceDir := installer.props.PathResolver.AgentSharedBinaryDirForImage(installer.props.ImageDigest)
 	return processmoduleconfig.CreateAgentConfigDir(installer.fs, targetDir, sourceDir, processModuleConfig)
 }
 
@@ -88,26 +80,17 @@ func (installer *Installer) installAgentFromImage() error {
 	}
 	image := installer.props.ImageUri
 
+	if installer.isAlreadyDownloaded(installer.props.ImageDigest) {
+		log.Info("image is already installed", "image", image, "digest", installer.props.ImageDigest)
+		return nil
+	}
+
 	sourceCtx, sourceRef, err := getSourceInfo(CacheDir, *installer.props)
 	if err != nil {
 		log.Info("failed to get source information", "image", image)
 		return errors.WithStack(err)
 	}
-
-	imageDigest, err := getImageDigest(sourceCtx, sourceRef)
-	if err != nil {
-		log.Info("failed to get image digest", "image", image)
-		return errors.WithStack(err)
-	}
-
-	imageDigestEncoded := imageDigest.Encoded()
-	if installer.isAlreadyDownloaded(imageDigestEncoded) {
-		log.Info("image is already installed", "image", image, "digest", imageDigestEncoded)
-		installer.props.imageDigest = imageDigestEncoded
-		return nil
-	}
-
-	imageCacheDir := getCacheDirPath(imageDigestEncoded)
+	imageCacheDir := getCacheDirPath(installer.props.ImageDigest)
 	destinationCtx, destinationRef, err := getDestinationInfo(imageCacheDir)
 	if err != nil {
 		log.Info("failed to get destination information", "image", image, "imageCacheDir", imageCacheDir)
@@ -117,7 +100,7 @@ func (installer *Installer) installAgentFromImage() error {
 	err = installer.extractAgentBinariesFromImage(
 		imagePullInfo{
 			imageCacheDir:  imageCacheDir,
-			targetDir:      installer.props.PathResolver.AgentSharedBinaryDirForImage(imageDigestEncoded),
+			targetDir:      installer.props.PathResolver.AgentSharedBinaryDirForImage(installer.props.ImageDigest),
 			sourceCtx:      sourceCtx,
 			destinationCtx: destinationCtx,
 			sourceRef:      sourceRef,
@@ -128,7 +111,6 @@ func (installer *Installer) installAgentFromImage() error {
 		log.Info("failed to extract agent binaries from image", "image", image, "imageCacheDir", imageCacheDir)
 		return errors.WithStack(err)
 	}
-	installer.props.imageDigest = imageDigestEncoded
 	return nil
 }
 
@@ -136,10 +118,6 @@ func (installer Installer) isAlreadyDownloaded(imageDigestEncoded string) bool {
 	sharedDir := installer.props.PathResolver.AgentSharedBinaryDirForImage(imageDigestEncoded)
 	_, err := installer.fs.Stat(sharedDir)
 	return !os.IsNotExist(err)
-}
-
-func getImageDigest(systemContext *types.SystemContext, imageReference *types.ImageReference) (digest.Digest, error) {
-	return docker.GetDigest(context.TODO(), systemContext, *imageReference)
 }
 
 func getCacheDirPath(digest string) string {

@@ -207,7 +207,7 @@ func getAllDynakubes(ctx context.Context, apiReader client.Reader, namespace str
 func filterCodeModulesImageDynakubes(dynakubeList *dynatracev1beta1.DynaKubeList) map[string]dynatracev1beta1.DynaKube {
 	filteredDynakubes := make(map[string]dynatracev1beta1.DynaKube)
 	for _, dynakube := range dynakubeList.Items {
-		if dynakube.CustomCodeModulesImage() != "" {
+		if dynakube.CodeModulesImage() != "" {
 			filteredDynakubes[dynakube.Name] = dynakube
 		}
 	}

@@ -144,6 +144,9 @@ func (provisioner *OneAgentProvisioner) provision(ctx context.Context, dk *dynat
 		return err
 	}
 
+	if dk.CodeModulesImage() == "" || dk.CodeModulesVersion() == "" {
+		return err // TODO: do something so that it requeues after a few seconds
+	}
 	latestProcessModuleConfigCache, requeue, err := provisioner.updateAgentInstallation(ctx, dtc, dynakubeMetadata, dk)
 	if requeue || err != nil {
 		return err
@@ -176,7 +179,7 @@ func (provisioner *OneAgentProvisioner) updateAgentInstallation(ctx context.Cont
 	latestProcessModuleConfig = latestProcessModuleConfig.AddHostGroup(dk.HostGroup())
 
 	var agentUpdater *agentUpdater
-	if dk.CustomCodeModulesImage() != "" {
+	if dk.CodeModulesImage() != "" {
 		connectionInfo, err := dtc.GetOneAgentConnectionInfo()
 		if err != nil {
 			log.Info("could not query connection info")
@@ -210,9 +213,9 @@ func (provisioner *OneAgentProvisioner) updateAgentInstallation(ctx context.Cont
 		return nil, true, nil
 	} else if updatedVersion != "" {
 		dynakubeMetadata.LatestVersion = updatedVersion
-		imageInstaller, isImageInstaller := agentUpdater.installer.(*image.Installer)
+		_, isImageInstaller := agentUpdater.installer.(*image.Installer)
 		if isImageInstaller {
-			dynakubeMetadata.ImageDigest = imageInstaller.ImageDigest()
+			dynakubeMetadata.ImageDigest = dk.Status.CodeModules.ImageHash
 		} else {
 			dynakubeMetadata.ImageDigest = ""
 		}
